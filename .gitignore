@@ -1,0 +1,18 @@
+# данные: лежат в SRA/ENA, в репозиторий не кладём
+data/
+*.fastq
+*.fastq.gz
+*.fq.gz
+*.sra
+*.bam
+
+# тяжёлые промежуточные результаты
+work/
+tmp/
+
+# служебные файлы окружения и IDE
+.venv/
+.idea/
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store

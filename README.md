@@ -4,7 +4,7 @@ Differential gene expression analysis of esophageal squamous cell carcinoma (ESC
 
 ## Данные
 
-- **GEO:** [GSE164158](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE164158), BioProject PRJNA689069
+- **GEO:** [GSE164158](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE164158), BioProject PRJNA689307
 - **Дизайн:** 8 пациентов, парные образцы опухоль + прилежащая норма (16 образцов)
 - **Секвенирование:** Illumina HiSeq X Ten, paired-end 2×150
 - Для разработки используется подвыборка: первые N пар ридов каждого образца (детерминированно, воспроизводимо)
@@ -27,9 +27,9 @@ Differential gene expression analysis of esophageal squamous cell carcinoma (ESC
 nextflow run main.nf -profile docker
 ```
 
-Параметры (`nextflow.config`): 
-    `--reads` — шаблон пар FASTQ, 
-    `--outdir` — папка результатов.
+Параметры (`nextflow.config`):
+`--reads` — шаблон пар FASTQ,
+`--outdir` — папка результатов.
 
 ## Контроль качества: предварительные наблюдения
 

@@ -1,16 +1,16 @@
 // Процесс FASTQC: отчёт о качестве для одной пары ридов
 process FASTQC {
-    tag "${sample}"   // подпись в логе: видно, какой образец сейчас обрабатывается
+    tag "${sample}"
     container 'community.wave.seqera.io/library/fastqc:0.13.0--b342db7b694c9af4'
-    publishDir "${params.outdir}/fastqc", mode: 'copy'   // скопировать готовые отчёты в results/fastqc
+    publishDir "${params.outdir}/fastqc", mode: 'copy'
     cpus 2
 
     input:
-    tuple val(sample), path(reads)   // имя образца + список из двух файлов
+    tuple val(sample), path(reads)
 
     output:
-    path "*_fastqc.html"   // отчёты для просмотра
-    path "*_fastqc.zip"    // те же данные в машинном виде (понадобятся для MultiQC)
+    path "*_fastqc.html", emit: html   // emit — имя выхода, чтобы обращаться к нему из workflow
+    path "*_fastqc.zip",  emit: zip    // zip-архивы понадобятся MultiQC
 
     script:
     """
@@ -18,13 +18,30 @@ process FASTQC {
     """
 }
 
-// Главный workflow: откуда берём данные и куда их отправляем
+// Процесс MULTIQC: один сводный отчёт по всем образцам
+process MULTIQC {
+    container 'community.wave.seqera.io/library/multiqc:1.35--c17fb751507e9dfc'
+    publishDir "${params.outdir}/multiqc", mode: 'copy'
+
+    input:
+    path qc_files              // список с путями к файлам
+
+    output:
+    path "multiqc_report.html" // сам отчёт
+    path "multiqc_data"        // таблицы с цифрами из отчёта
+
+    script:
+    """
+    multiqc .
+    """
+}
+
 workflow {
-    // ищем файлы по шаблону и группируем по общей части имени:
-    // SRR13344601 -> [SRR13344601_1.sub1M.fastq.gz, SRR13344601_2.sub1M.fastq.gz]
     reads_ch = channel.fromFilePairs(params.reads, checkIfExists: true)
 
-    reads_ch.view()   // напечатать содержимое канала: удобно для отладки
-
     FASTQC(reads_ch)
+
+    // FASTQC выдаёт zip-архивы по одному на задачу; collect() ждёт,
+    // пока закончатся ВСЕ задачи, и собирает архивы в один список
+    MULTIQC(FASTQC.out.zip.collect())
 }

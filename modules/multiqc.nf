@@ -9,8 +9,10 @@ process MULTIQC {
     path "multiqc_report.html"
     path "multiqc_data"
 
+
     script:
+    // для fastp брать имя образца из имени файла отчёта, а не из входных файлов
     """
-    multiqc .
+    multiqc --cl-config "use_filename_as_sample_name: [fastp]" .
     """
 }

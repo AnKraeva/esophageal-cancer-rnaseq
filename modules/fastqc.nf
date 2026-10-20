@@ -12,7 +12,12 @@ process FASTQC {
     path "*_fastqc.zip",  emit: zip    // zip-архивы понадобятся MultiQC
 
     script:
+    // префикс задаётся в конфиге (raw / trim); если не задан — просто имя образца
+    def prefix = task.ext.prefix ?: sample
     """
-    fastqc --threads ${task.cpus} ${reads}
+    # ln -s создаёт ссылку на файл под новым именем (копировать не нужно)
+    ln -s ${reads[0]} ${prefix}_R1.fastq.gz
+    ln -s ${reads[1]} ${prefix}_R2.fastq.gz
+    fastqc --threads ${task.cpus} ${prefix}_R1.fastq.gz ${prefix}_R2.fastq.gz
     """
 }

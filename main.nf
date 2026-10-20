@@ -1,12 +1,20 @@
-// Подключаем модули под именами "для сырых ридов"
-include { FASTQC  as FASTQC_RAW  } from './modules/fastqc'
-include { MULTIQC as MULTIQC_RAW } from './modules/multiqc'
+// Подключаем модули. FastQC — дважды под разными именами: до и после обрезки
+include { FASTQC as FASTQC_RAW  } from './modules/fastqc'
+include { FASTQC as FASTQC_TRIM } from './modules/fastqc'
+include { FASTP                 } from './modules/fastp'
+include { MULTIQC               } from './modules/multiqc'
 
 workflow {
     reads_ch = channel.fromFilePairs(params.reads, checkIfExists: true)
 
-    FASTQC_RAW(reads_ch)
+    FASTQC_RAW(reads_ch)                 // качество сырых ридов
+    FASTP(reads_ch)                      // обрезка
+    FASTQC_TRIM(FASTP.out.reads)         // качество после обрезки
 
-    // collect() ждёт все задачи FastQC и собирает архивы в один список
-    MULTIQC_RAW(FASTQC_RAW.out.zip.collect())
+    // всё для MultiQC — в один канал: mix сливает каналы, collect ждёт все задачи
+    multiqc_files = FASTQC_RAW.out.zip
+        .mix(FASTP.out.json, FASTQC_TRIM.out.zip)
+        .collect()
+
+    MULTIQC(multiqc_files)               // один общий отчёт
 }

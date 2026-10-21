@@ -1,0 +1,3 @@
+sample,run_accession,fastq_1,fastq_2
+N3,SRR13344595,https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR133/095/SRR13344595/SRR13344595_1.fastq.gz,https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR133/095/SRR13344595/SRR13344595_2.fastq.gz
+T3,SRR13344603,https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR133/003/SRR13344603/SRR13344603_1.fastq.gz,https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR133/003/SRR13344603/SRR13344603_2.fastq.gz

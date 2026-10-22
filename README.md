@@ -1,6 +1,6 @@
 # RNA-seq: плоскоклеточный рак пищевода (GSE164158)
 
-Differential gene expression analysis of esophageal squamous cell carcinoma (ESCC) vs. matched adjacent normal tissue. Nextflow pipeline, Docker containers, public data from GEO/SRA.
+Differential gene expression analysis of esophageal squamous cell carcinoma (ESCC) vs. matched adjacent normal tissue. Nextflow pipeline, Docker containers, public data from GEO/ENA.
 
 ## Данные
 
@@ -50,6 +50,17 @@ python3 bin/make_samplesheet.py PRJNA689307
 nextflow run main.nf -profile docker
 ```
 
+На Mac с Apple Silicon добавить профиль `arm64` (родные arm64-контейнеры вместо эмуляции amd64; те же программы и версии):
+
+```bash
+nextflow run main.nf -profile docker,arm64
+```
+
+> [!TIP]
+> На Mac добавьте `caffeinate -i` перед командой, чтобы ноутбук не уснул во время расчёта.
+
+На 16 образцах по 10 млн пар (MacBook Air, 8 ядер для Docker) QC + fastp выполняются за 27 мин вместо 1 ч 53 мин с amd64-контейнерами; результаты QC совпадают.
+
 Параметры (`nextflow.config`):
 - `--input` — samplesheet (по умолчанию `metadata/samplesheet.csv`);
 - `--n_reads` — сколько первых пар ридов скачивать на образец (по умолчанию 10 000 000; `0` — файлы целиком);
@@ -82,9 +93,7 @@ nextflow run main.nf -profile docker --input metadata/samplesheet_test.csv --n_r
 - Дупликация Read 1 выросла с 6% до 17% и сравнялась с Read 2: до обрезки её занижал случайный UMI.
 - После вырезания UMI в Read 1 стали видны частые последовательности — начала 7SL и 7SK RNA в прямой ориентации, что дополнительно подтверждает
   forward-stranded библиотеку.
-
-
-
+- 
 
 ## Контроль качества всех 16 образцов (по 10 млн пар)
 

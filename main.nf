@@ -1,12 +1,25 @@
 // Подключаем модули. FastQC — дважды под разными именами: до и после обрезки
 include { DOWNLOAD_ENA          } from './modules/download_ena'
+include { DOWNLOAD_REFERENCE    } from './modules/download_reference'
+include { SALMON_INDEX          } from './modules/salmon_index'
 include { FASTQC as FASTQC_RAW  } from './modules/fastqc'
 include { FASTQC as FASTQC_TRIM } from './modules/fastqc'
 include { FASTP                 } from './modules/fastp'
 include { MULTIQC               } from './modules/multiqc'
+include { SALMON_QUANT          } from './modules/salmon_quant'
+include { TX2GENE               } from './modules/tx2gene'
+
 
 workflow {
 
+    // --- референс: не зависит от образцов, готовится один раз ---
+    // на вход простое значение (а не канал из файла) → выходы станут каналами-значениями:
+    // их можно читать сколько угодно раз (индекс понадобится всем 16 образцам)
+    DOWNLOAD_REFERENCE(params.gencode_version)
+    SALMON_INDEX(DOWNLOAD_REFERENCE.out.transcripts, params.gencode_version)
+    TX2GENE(DOWNLOAD_REFERENCE.out.gtf, params.gencode_version)   // таблица для tximport
+
+    // --- образцы ---
     // samplesheet -> по строке на образец: [имя, ссылка R1, ссылка R2]
     samples_ch = channel.fromPath(params.input, checkIfExists: true)
         .splitCsv(header: true)
@@ -22,10 +35,19 @@ workflow {
     FASTP(reads_ch)                      // обрезка
     FASTQC_TRIM(FASTP.out.reads)         // качество после обрезки
 
+
+
+
+    // квантификация: каждый образец + один и тот же индекс
+    SALMON_QUANT(FASTP.out.reads, SALMON_INDEX.out.index)
+
     // всё для MultiQC — в один канал: mix сливает каналы, collect ждёт все задачи
+    // из salmon берём только папку (второй элемент [имя, папка]) — MultiQC сам найдёт в ней логи
     multiqc_files = FASTQC_RAW.out.zip
-        .mix(FASTP.out.json, FASTQC_TRIM.out.zip)
-        .collect()
+      .mix(FASTP.out.json,
+           FASTQC_TRIM.out.zip,
+           SALMON_QUANT.out.results.map { sample, dir -> dir })
+      .collect()
 
     MULTIQC(multiqc_files)               // один общий отчёт
 }

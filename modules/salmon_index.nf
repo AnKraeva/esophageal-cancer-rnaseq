@@ -8,12 +8,13 @@ process SALMON_INDEX {
     memory '8 GB'                    // для индекса только по транскриптам с запасом
 
     input:
-    path transcripts                 // gencode.vNN.transcripts.fa.gz
+    path transcripts                 // gencode.vNN.transcripts.chr.fa.gz (только основные хромосомы)
     val version                      // номер GENCODE — для имени папки индекса
 
     output:
     // версия в имени: при переходе на новый GENCODE не подхватится старый индекс из storeDir
-    path "salmon_index_gencode${version}", emit: index
+    // _chr: индекс только по транскриптам основных хромосом (без гаплотипов и патчей)
+    path "salmon_index_gencode${version}_chr", emit: index
 
     script:
     // -k 31      длина k-меров (значение по умолчанию, пишем явно для наглядности)
@@ -21,7 +22,7 @@ process SALMON_INDEX {
     """
     salmon index \\
         -t ${transcripts} \\
-        -i salmon_index_gencode${version} \\
+        -i salmon_index_gencode${version}_chr \\
         -k 31 \\
         --gencode \\
         -p ${task.cpus}

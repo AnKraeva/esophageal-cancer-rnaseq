@@ -8,6 +8,7 @@ include { FASTP                 } from './modules/fastp'
 include { MULTIQC               } from './modules/multiqc'
 include { SALMON_QUANT          } from './modules/salmon_quant'
 include { TX2GENE               } from './modules/tx2gene'
+include { FILTER_TRANSCRIPTS    } from './modules/filter_transcripts'
 
 
 workflow {
@@ -16,8 +17,10 @@ workflow {
     // на вход простое значение (а не канал из файла) → выходы станут каналами-значениями:
     // их можно читать сколько угодно раз (индекс понадобится всем 16 образцам)
     DOWNLOAD_REFERENCE(params.gencode_version)
-    SALMON_INDEX(DOWNLOAD_REFERENCE.out.transcripts, params.gencode_version)
-    TX2GENE(DOWNLOAD_REFERENCE.out.gtf, params.gencode_version)   // таблица для tximport
+    TX2GENE(DOWNLOAD_REFERENCE.out.gtf, params.gencode_version)   // транскрипт → ген (только основные хромосомы)
+    // транскрипты только основных хромосом — ровно тот же набор, что в tx2gene
+    FILTER_TRANSCRIPTS(DOWNLOAD_REFERENCE.out.transcripts, TX2GENE.out.tsv, params.gencode_version)
+    SALMON_INDEX(FILTER_TRANSCRIPTS.out.fasta, params.gencode_version)
 
     // --- образцы ---
     // samplesheet -> по строке на образец: [имя, ссылка R1, ссылка R2]

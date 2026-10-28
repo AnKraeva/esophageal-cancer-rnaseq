@@ -9,6 +9,7 @@ include { MULTIQC               } from './modules/multiqc'
 include { SALMON_QUANT          } from './modules/salmon_quant'
 include { TX2GENE               } from './modules/tx2gene'
 include { FILTER_TRANSCRIPTS    } from './modules/filter_transcripts'
+include { SALMON_QC             } from './modules/salmon_qc'
 
 
 workflow {
@@ -44,13 +45,20 @@ workflow {
     // квантификация: каждый образец + один и тот же индекс
     SALMON_QUANT(FASTP.out.reads, SALMON_INDEX.out.index)
 
+        // сводка проверок по всем образцам: собираем папки salmon в один список (collect)
+    SALMON_QC(
+        SALMON_QUANT.out.results.map { sample, dir -> dir }.collect(),
+        TX2GENE.out.tsv
+    )
+
     // всё для MultiQC — в один канал: mix сливает каналы, collect ждёт все задачи
     // из salmon берём только папку (второй элемент [имя, папка]) — MultiQC сам найдёт в ней логи
     multiqc_files = FASTQC_RAW.out.zip
-      .mix(FASTP.out.json,
-           FASTQC_TRIM.out.zip,
-           SALMON_QUANT.out.results.map { sample, dir -> dir })
-      .collect()
+        .mix(FASTP.out.json,
+             FASTQC_TRIM.out.zip,
+             SALMON_QUANT.out.results.map { sample, dir -> dir },
+             SALMON_QC.out.tsv)
+        .collect()
 
     MULTIQC(multiqc_files)               // один общий отчёт
 }

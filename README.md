@@ -44,7 +44,7 @@ python3 bin/make_samplesheet.py PRJNA689307
 | Квантификация | salmon 2.8.0 | ✅ |
 | Сводка проверок квантификации (флаги выбросов, пол по парам) | Python (`bin/salmon_qc.py`) | ✅ |
 | Сводный отчёт QC (+ salmon) | MultiQC 1.35 | ✅ |
-| Дифференциальная экспрессия | tximport + DESeq2 | ⏳ |
+| Дифференциальная экспрессия | tximport + DESeq2 | ✅ |
 
 ## Запуск
 
@@ -75,12 +75,6 @@ nextflow run main.nf -profile docker,arm64
 Референс GENCODE, таблица tx2gene, отфильтрованные транскрипты и индекс salmon тоже готовятся один раз и хранятся в `data/reference/`.
 
 Пайплайн рассчитан на референс **GENCODE для человека**: адреса загрузки, формат заголовков FASTA (`--gencode`) и разбор GTF заточены под него; параметром задаётся только номер релиза.
-
-Быстрая проверка на одной паре образцов:
-
-```bash
-nextflow run main.nf -profile docker --input metadata/samplesheet_test.csv --n_reads 100000
-```
 
 
 ## Предварительные наблюдения по подвыборке образца SRR13344601 (N21, 1 млн пар):

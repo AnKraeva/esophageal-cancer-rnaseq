@@ -10,7 +10,7 @@ include { SALMON_QUANT          } from './modules/salmon_quant'
 include { TX2GENE               } from './modules/tx2gene'
 include { FILTER_TRANSCRIPTS    } from './modules/filter_transcripts'
 include { SALMON_QC             } from './modules/salmon_qc'
-
+include { DESEQ2                } from './modules/deseq2'
 
 workflow {
 
@@ -40,16 +40,29 @@ workflow {
     FASTQC_TRIM(FASTP.out.reads)         // качество после обрезки
 
 
-
-
     // квантификация: каждый образец + один и тот же индекс
     SALMON_QUANT(FASTP.out.reads, SALMON_INDEX.out.index)
 
-        // сводка проверок по всем образцам: собираем папки salmon в один список (collect)
+
+    // сводка проверок по всем образцам: собираем папки salmon в один список (collect)
     SALMON_QC(
         SALMON_QUANT.out.results.map { sample, dir -> dir }.collect(),
         TX2GENE.out.tsv
     )
+
+    // собираем каталоги всех образцов для одного общего запуска DESeq2
+    salmon_dirs = SALMON_QUANT.out.results
+        .map { sample, dir -> dir }
+        .collect(sort: true)
+
+    DESEQ2(
+        salmon_dirs,
+        TX2GENE.out.tsv,
+        file(params.input, checkIfExists: true),
+        file("${projectDir}/bin/deseq2.R", checkIfExists: true),
+        params.gencode_version
+    )
+
 
     // всё для MultiQC — в один канал: mix сливает каналы, collect ждёт все задачи
     // из salmon берём только папку (второй элемент [имя, папка]) — MultiQC сам найдёт в ней логи
